@@ -1,0 +1,140 @@
+Import one table with key from mysql into HDFS
+------------------------------------------------
+sqoop import --connect jdbc:mysql://localhost/college --username root --password 'adam' --table student_master --target-dir /niit/sept21/student_master;
+
+insert into student_master values (5,"John","Mumbai");
+insert into student_master values (6,"Jane","NYC");
+insert into student_master values (7,"Kane","LA");
+
+delete from student_master where student_id = 1;
+
+importing after changes in data
+------------------
+sqoop import --connect jdbc:mysql://localhost/college --username root --password 'adam' --table student_master --target-dir /niit/sept21/student_master1;
+
+==============================================
+Import with incremental command
+---------------------------------
+sqoop import --connect jdbc:mysql://localhost/college --username root --password 'adam' --table student_master --check-column student_id --incremental append --last-value 4 --target-dir /niit/sept21/student_master1;
+
+
+in the incremental command give the existing foldername
+================================================
+Compress a file:
+
+sqoop import --connect jdbc:mysql://localhost/college --username root --password 'adam' --table student_master --target-dir /niit/sept21/compZip --compress -m 1;
+
+=================================================
+import one table without key from mysql to hdfs
+---------------------------------------
+sqoop import --connect jdbc:mysql://localhost/college --username root --password 'adam' --table topten --target-dir /niit/sept21/topen;
+
+it doesnt work mapper option is complusery
+
+sqoop import --connect jdbc:mysql://localhost/college --username root --password 'adam' --table topten --target-dir /niit/sept21/topen -m 1;
+
+Using direct option
+--------------------
+sqoop import --connect jdbc:mysql://localhost/college --username root --password 'adam' --direct --table topten --target-dir /niit/sept21/topten1 -m 1;
+
+using split by option
+-------------------------
+sqoop import --connect jdbc:mysql://localhost/college --username root --password 'adam' --direct --table topten --target-dir /niit/sept21/topten2 --split-by customer_id;
+
+
+
+================================================
+Importing into an avro table from mysql
+
+sqoop import --connect jdbc:mysql://localhost/college --username root --password 'adam' --table topten --target-dir /niit/sept21/top10avro --as-avrodatafile -m 1;
+
+
+
+Create  avroSerde table:
+-------------------------
+CREATE TABLE toptenavro row format serde 'org.apache.hadoop.hive.serde2.avro.AvroSerDe'
+stored as inputformat 'org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat'
+outputformat 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat' TBLPROPERTIES(
+'avro.schema.literal' = '{ "namespace":"abc", "name":"top10", "type":"record", "fields":[ {"name":"customer_id","type":"int"}, {"name":"fname","type":"string"},
+{"name":"lname","type":"string"}, {"name":"age","type":"int"}, {"name":"profession","type":"string"}, {"name":"amount","type":"double"}] }');
+
+
+loading data:
+---------------
+load data inpath '/niit/sept21/top10avro/part-m-00000.avro' overwrite into table toptenavro;
+
+
+
+For sequence file: (only --as- option changed)
+----------------------------
+sqoop import --connect jdbc:mysql://localhost/college --username root --password 'adam' --table topten --target-dir /niit/sept21/top10avro --as-sequencefile -m 1;
+
+========================================================
+
+With where clause
+
+sqoop import --connect jdbc:mysql://localhost/college --username root --password 'adam' --table student_master --where 'student_id=2 or student_id=3' --target-dir /niit/sept21/whrclause -m 1;
+
+==========================================================
+
+With query 
+
+sqoop import --connect jdbc:mysql://localhost/college --username root --password 'adam' --query 'select * from student_master where $CONDITIONS and student_id=2' --target-dir /niit/sept21/query1 -m 1;
+
+===================================================
+
+with inner joins
+
+sqoop import --connect jdbc:mysql://localhost/college --username root --password 'adam' --query 'select a.student_id, a.name, a.address, b.result from student_master a, fy b where $CONDITIONS and a.student_id=b.student_id' --target-dir /niit/sept21/innerJoin1 -m 1;
+
+===================================================
+
+with left outer join in the form of query
+
+sqoop import --connect jdbc:mysql://localhost/college --username root --password 'adam' --query 'select a.student_id, a.name, a.address, b.result from student_master a left outer join fy b on a.student_id=b.student_id where $CONDITIONS' --target-dir /niit/sept21/leftOuterJoin1 -m 1;
+=====================================================
+
+with right outer join in the form of query
+
+sqoop import --connect jdbc:mysql://localhost/college --username root --password 'adam' --query 'select a.student_id, a.name, a.address, b.result from student_master a right outer join fy b on a.student_id=b.student_id where $CONDITIONS' --target-dir /niit/sept21/rightOuterJoin1 -m 1;
+
+=======================================================
+
+with column clause
+
+sqoop import --connect jdbc:mysql://localhost/college --username root --password 'adam' --table student_master --columns "student_id,name" --target-dir /niit/sept21/colCl1 -m 1;
+=======================================================
+Import all tables from one database
+
+without mapper option specified
+-----------------------------------
+sqoop import-all-tables --connect jdbc:mysql://localhost/college --username root --password 'adam' --warehouse-dir /niit/sept21/all_tables1;
+
+with mapper options specified
+--------------------------------
+sqoop import-all-tables --connect jdbc:mysql://localhost/college --username root --password 'adam' --warehouse-dir /niit/sept21/all_tables2 -m 1;
+
+
+
+=========================================================
+Importing mysql data into hive managed tables:
+
+1. create a database in hive
+----------------------------
+create database college;
+
+Now quit hive.
+
+2. import tables:
+-----------------
+sqoop import --connect jdbc:mysql://localhost/college --username root --password 'adam' --table student_master --hive-import --hive-table college.student_profile -m 1;
+
+
+sqoop import --connect jdbc:mysql://localhost/college --username root --password 'adam' --table fy --hive-import --hive-table college.fyresults1 -m 1;
+
+
+import with selected columns
+----------------------------
+sqoop import --connect jdbc:mysql://localhost/college --username root --password 'adam' --table student_master --columns "student_id,name" --hive-import --hive-table college.student1 -m 1;
+
+
