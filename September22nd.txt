@@ -1,0 +1,53 @@
+importing data into hive managed tables with join (inner join):
+---------------------------------------------------
+sqoop import --connect jdbc:mysql://localhost/college --username root --password 'adam' --query 'select a.student_id, a.name, a.address, b.result from student_master a, fy b where $CONDITIONS and a.student_id=b.student_id' --hive-import --hive-table college.studentJoin --target-dir /niit/sept22/innerJoin2 -m 1;
+
+
+Exporting data from hdfs to mysql
+-----------------------------------
+
+hdfs dfs -put emp1.txt /niit/sept22/datafiles/
+hdfs dfs -put emp2.txt /niit/sept22/datafiles/
+
+create table employee_master (
+employee_id INT not Null auto_increment,
+name varchar(40) not null,
+address varchar(40) not null,
+primary key (employee_id));
+
+1. 1st export:
+---------------------
+sqoop export --connect jdbc:mysql://localhost/college --username root --password 'adam' --table employee_master --update-mode allowinsert --update-key employee_id --export-dir /niit/sept22/datafiles/emp1.txt --input-fields-terminated-by ',';
+
+
+2. 2nd export
+---------------
+sqoop export --connect jdbc:mysql://localhost/college --username root --password 'adam' --table employee_master --update-mode allowinsert --update-key employee_id --export-dir /niit/sept22/datafiles/emp2.txt --input-fields-terminated-by ',';
+
+
+====================================================
+Ex. 2
+-------
+Create table customer (
+customer_id varchar(20) not null,
+firstname varchar(40) not null,
+lastname varchar(40) not null,
+age int not null,
+profession varchar(40) not null,
+primary key(customer_id));
+
+
+
+in hive
+----------
+create table customer (custo INT, firstname STRING, lastname STRING, age INT, profession STRING)
+row format delimited
+fields terminated by ','
+stored as textfile;
+
+LOAD DATA LOCAL INPATH '/home/franklin/custs.txt' OVERWRITE INTO TABLE customer;
+
+
+sqoop export --connect jdbc:mysql://localhost/college --username root --password 'adam' --table customer --update-mode allowinsert --update-key customer_id --export-dir /user/hive/warehouse/niit.db/customer --input-fields-terminated-by ',';
+
+
